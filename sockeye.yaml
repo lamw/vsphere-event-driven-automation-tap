@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sockeye
+  name: sockeye
+  namespace: vmware-functions
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sockeye
+  template:
+    metadata:
+      labels:
+        app: sockeye
+    spec:
+      containers:
+      - image: docker.io/n3wscott/sockeye:v0.7.0@sha256:e603d8494eeacce966e57f8f508e4c4f6bebc71d095e3f5a0a1abaf42c5f0e48
+        name: sockeye
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: sockeye
+  name: sockeye
+  namespace: vmware-functions
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: sockeye
+  sessionAffinity: None
+  type: LoadBalancer
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: sockeye-trigger
+  namespace: vmware-functions
+spec:
+  broker: default
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: sockeye
